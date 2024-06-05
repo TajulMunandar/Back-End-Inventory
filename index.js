@@ -8,11 +8,21 @@ import profileRoutes from "./routes/profileRoutes.js";
 import peminjamanRoutes from "./routes/peminjamanRoutes.js";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import { connection } from "./database/db.js";
 
 dotenv.config();
 const app = express();
+
+app.use(
+  cors({
+    origin: "*",
+    methods: ["POST", "GET", "DELETE", "PATCH", "PUT"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Cookie"],
+  })
+);
 
 app.use(cookieParser());
 app.use(bodyParser.json());
