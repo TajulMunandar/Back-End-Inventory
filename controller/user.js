@@ -26,7 +26,7 @@ export const createUser = [
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
   body("telepon")
-    .isMobilePhone()
+    .isString()
     .withMessage("Telepon must be a valid phone number")
     .trim(),
   body("nik")
@@ -139,7 +139,7 @@ export const updateUser = [
     }),
   body("telepon")
     .optional()
-    .isMobilePhone()
+    .isString()
     .withMessage("Telepon must be a valid phone number")
     .trim(),
   body("nik")

@@ -39,7 +39,7 @@ export const updateProfile = [
       }
     }),
   body("telepon")
-    .isMobilePhone()
+    .isString()
     .withMessage("Telepon must be a valid phone number")
     .trim(),
   body("nik")
