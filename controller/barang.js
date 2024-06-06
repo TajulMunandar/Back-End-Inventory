@@ -63,7 +63,7 @@ export const createBarang = [
     .notEmpty()
     .withMessage("Kepemilikan is required"),
   body("status")
-    .isString()
+    .isInt({ max: 1 })
     .withMessage("Status must be a string")
     .trim()
     .notEmpty()
@@ -147,7 +147,7 @@ export const updateBarang = [
     .notEmpty()
     .withMessage("Kepemilikan is required"),
   body("status")
-    .isString()
+    .isInt({ max: 1 })
     .withMessage("Status must be a string")
     .trim()
     .notEmpty()
