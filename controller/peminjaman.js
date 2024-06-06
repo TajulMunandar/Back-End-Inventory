@@ -60,6 +60,10 @@ const createPeminjamanValidator = [
 ];
 
 export const createPeminjaman = async (req, res) => {
+  await Promise.all(
+    createPeminjamanValidator.map((validation) => validation.run(req))
+  );
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -170,6 +174,9 @@ export const createPeminjaman = async (req, res) => {
 };
 
 export const updatePeminjaman = async (req, res) => {
+  await Promise.all(
+    createPeminjamanValidator.map((validation) => validation.run(req))
+  );
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
