@@ -1,4 +1,5 @@
 import { query } from "../database/db.js";
+import { body, param, validationResult } from "express-validator";
 
 export const getBarangs = async (req, res) => {
   const sql = "SELECT * FROM barang";
@@ -23,49 +24,62 @@ export const getBarangById = async (req, res) => {
   }
 };
 
-export const createBarang = async (req, res) => {
-  const {
-    nama_barang,
-    nomor_seri,
-    jumlah,
-    supplier,
-    kepemilikan,
-    status,
-    tgl_pembelian,
-  } = req.body;
-  const sql =
-    "INSERT INTO Barang (nama_barang, nomor_seri, jumlah, supplier, kepemilikan, status, tgl_pembelian) VALUES (?, ?, ?, ?, ?, ?, ?)";
-  try {
-    await query(sql, [
-      nama_barang,
-      nomor_seri,
-      jumlah,
-      supplier,
-      kepemilikan,
-      status,
-      tgl_pembelian,
-    ]);
-    res.status(201).json({ message: "Barang created successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+export const createBarang = [
+  // Validation and Sanitization
+  body("nama_barang")
+    .isString()
+    .withMessage("Nama Barang must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Nama Barang is required"),
+  body("nomor_seri")
+    .isString()
+    .withMessage("Nomor Seri must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Nomor Seri is required")
+    .custom(async (nomor_seri, { req }) => {
+      const { id } = req.params;
+      const sql =
+        "SELECT COUNT(*) AS count FROM barang WHERE nomor_seri = ? AND id_barang != ?";
+      const results = await query(sql, [nomor_seri, id]);
+      if (results[0].count > 0) {
+        throw new Error("Nomor Seri already in use");
+      }
+    }),
+  body("jumlah")
+    .isInt({ min: 1 })
+    .withMessage("Jumlah must be an integer greater than 0"),
+  body("supplier")
+    .isString()
+    .withMessage("Supplier must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Supplier is required"),
+  body("kepemilikan")
+    .isString()
+    .withMessage("Kepemilikan must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Kepemilikan is required"),
+  body("status")
+    .isString()
+    .withMessage("Status must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Status is required"),
+  body("tgl_pembelian")
+    .isDate()
+    .withMessage("Tanggal Pembelian must be a valid date"),
 
-export const updateBarang = async (req, res) => {
-  const { id } = req.params;
-  const {
-    nama_barang,
-    nomor_seri,
-    jumlah,
-    supplier,
-    kepemilikan,
-    status,
-    tgl_pembelian,
-  } = req.body;
-  const sql =
-    "UPDATE barang SET nama_barang = ?, nomor_seri = ?, jumlah = ?, supplier = ?, kepemilikan = ?, status = ?, tgl_pembelian = ? WHERE id_barang = ?";
-  try {
-    await query(sql, [
+  async (req, res) => {
+    // Handle validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {
       nama_barang,
       nomor_seri,
       jumlah,
@@ -73,13 +87,111 @@ export const updateBarang = async (req, res) => {
       kepemilikan,
       status,
       tgl_pembelian,
-      id,
-    ]);
-    res.json({ message: "Barang updated successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    } = req.body;
+    const sql =
+      "INSERT INTO Barang (nama_barang, nomor_seri, jumlah, supplier, kepemilikan, status, tgl_pembelian) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    try {
+      await query(sql, [
+        nama_barang,
+        nomor_seri,
+        jumlah,
+        supplier,
+        kepemilikan,
+        status,
+        tgl_pembelian,
+      ]);
+      res.status(201).json({ message: "Barang created successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+];
+
+export const updateBarang = [
+  // Validation and Sanitization
+  param("id").isInt().withMessage("ID must be an integer"),
+  body("nama_barang")
+    .isString()
+    .withMessage("Nama Barang must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Nama Barang is required"),
+  body("nomor_seri")
+    .isString()
+    .withMessage("Nomor Seri must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Nomor Seri is required")
+    .custom(async (nomor_seri, { req }) => {
+      const { id } = req.params;
+      const sql =
+        "SELECT COUNT(*) AS count FROM barang WHERE nomor_seri = ? AND id_barang != ?";
+      const results = await query(sql, [nomor_seri, id]);
+      if (results[0].count > 0) {
+        throw new Error("Nomor Seri already in use");
+      }
+    }),
+  body("jumlah")
+    .isInt({ min: 1 })
+    .withMessage("Jumlah must be an integer greater than 0"),
+  body("supplier")
+    .isString()
+    .withMessage("Supplier must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Supplier is required"),
+  body("kepemilikan")
+    .isString()
+    .withMessage("Kepemilikan must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Kepemilikan is required"),
+  body("status")
+    .isString()
+    .withMessage("Status must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Status is required"),
+  body("tgl_pembelian")
+    .isDate()
+    .withMessage("Tanggal Pembelian must be a valid date"),
+
+  async (req, res) => {
+    // Handle validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    const {
+      nama_barang,
+      nomor_seri,
+      jumlah,
+      supplier,
+      kepemilikan,
+      status,
+      tgl_pembelian,
+    } = req.body;
+    const sql =
+      "UPDATE barang SET nama_barang = ?, nomor_seri = ?, jumlah = ?, supplier = ?, kepemilikan = ?, status = ?, tgl_pembelian = ? WHERE id_barang = ?";
+    try {
+      await query(sql, [
+        nama_barang,
+        nomor_seri,
+        jumlah,
+        supplier,
+        kepemilikan,
+        status,
+        tgl_pembelian,
+        id,
+      ]);
+      res.json({ message: "Barang updated successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+];
 
 export const deleteBarang = async (req, res) => {
   const { id } = req.params;

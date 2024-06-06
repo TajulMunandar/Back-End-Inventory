@@ -1,4 +1,5 @@
 import { query } from "../database/db.js";
+import { body, validationResult } from "express-validator";
 
 export const getPeminjaman = async (req, res) => {
   const sql = "SELECT * FROM Peminjaman";
@@ -36,7 +37,32 @@ export const getPeminjamanByUser = async (req, res) => {
   }
 };
 
+const createPeminjamanValidator = [
+  // Validation and Sanitization
+  body("id_barang").isInt().withMessage("ID Barang must be an integer"),
+  body("id_user").isInt().withMessage("ID User must be an integer"),
+  body("ket")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("Keterangan is required"),
+  body("qty")
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be an integer greater than 0"),
+  body("tgl_pinjam")
+    .isISO8601()
+    .toDate()
+    .withMessage("Tanggal Pinjam must be a valid ISO 8601 date"),
+  body("durasi_pinjam")
+    .isInt({ min: 1 })
+    .withMessage("Durasi Pinjam must be an integer greater than 0"),
+];
+
 export const createPeminjaman = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const { id_barang, id_user, ket, qty, tgl_pinjam, durasi_pinjam } = req.body;
 
   const insertPeminjamanQuery = `
@@ -89,6 +115,10 @@ export const createPeminjaman = async (req, res) => {
 };
 
 export const updatePeminjaman = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const { id_barang, id_user, ket, qty, tgl_pinjam, durasi_pinjam } = req.body;
   const { id } = req.params;
 
