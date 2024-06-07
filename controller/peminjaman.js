@@ -28,6 +28,12 @@ export const getPeminjaman = async (req, res) => {
 
   try {
     const rows = await query(sql);
+    const statusMap = {
+      0: "pending",
+      1: "approved",
+      2: "rejected",
+      3: "completed",
+    };
 
     const peminjamans = rows.map((row) => ({
       id_peminjaman: row.id_peminjaman,
@@ -47,6 +53,7 @@ export const getPeminjaman = async (req, res) => {
       durasi_pinjam: row.durasi_pinjam,
       tgl_kembali: row.tgl_kembali,
       status: row.status,
+      status_formated: statusMap[row.status] || "unknown",
     }));
 
     res.json(peminjamans);
@@ -57,12 +64,61 @@ export const getPeminjaman = async (req, res) => {
 
 export const getPeminjamanById = async (req, res) => {
   const { id } = req.params;
-  const sql = "SELECT * FROM Peminjaman WHERE id_peminjaman = ?";
+  const sql = ` SELECT 
+      p.id_peminjaman, 
+      p.id_barang, 
+      b.nama_barang, 
+      -- add other Barang columns here
+      p.id_user, 
+      u.nama AS nama_user, 
+      -- add other User columns here
+      p.qty, 
+      p.ket, 
+      p.tgl_pinjam, 
+      p.durasi_pinjam, 
+      p.tgl_kembali, 
+      p.status
+    FROM 
+      Peminjaman p
+    JOIN 
+      Barang b ON p.id_barang = b.id_barang
+    JOIN 
+      User u ON p.id_user = u.id_user 
+      WHERE id_peminjaman = ?`;
   try {
-    const peminjaman = await query(sql, [id]);
-    if (peminjaman.length === 0)
+    const peminjamana = await query(sql, [id]);
+    if (peminjamana.length === 0)
       return res.status(404).json({ message: "Peminjaman not found" });
-    res.json(barang[0]);
+
+    const statusMap = {
+      0: "pending",
+      1: "approved",
+      2: "rejected",
+      3: "completed",
+    };
+
+    const peminjaman = peminjamana.map((row) => ({
+      id_peminjaman: row.id_peminjaman,
+      barang: {
+        id_barang: row.id_barang,
+        nama_barang: row.nama_barang,
+        // include other Barang columns here
+      },
+      user: {
+        id_user: row.id_user,
+        nama: row.nama_user,
+        // include other User columns here
+      },
+      qty: row.qty,
+      ket: row.ket,
+      tgl_pinjam: row.tgl_pinjam,
+      durasi_pinjam: row.durasi_pinjam,
+      tgl_kembali: row.tgl_kembali,
+      status: row.status,
+      status_formated: statusMap[row.status] || "unknown",
+    }));
+
+    res.json(peminjaman);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -70,12 +126,63 @@ export const getPeminjamanById = async (req, res) => {
 
 export const getPeminjamanByUser = async (req, res) => {
   const id = req.userId;
-  const sql = "SELECT * FROM Peminjaman WHERE id_user = ?";
+  const sql = ` SELECT 
+  p.id_peminjaman, 
+  p.id_barang, 
+  b.nama_barang, 
+  -- add other Barang columns here
+  p.id_user, 
+  u.nama AS nama_user, 
+  -- add other User columns here
+  p.qty, 
+  p.ket, 
+  p.tgl_pinjam, 
+  p.durasi_pinjam, 
+  p.tgl_kembali, 
+  p.status
+FROM 
+  Peminjaman p
+JOIN 
+  Barang b ON p.id_barang = b.id_barang
+JOIN 
+  User u ON p.id_user = u.id_user 
+  WHERE p.id_user = ?`;
+
   try {
-    const peminjaman = await query(sql, [id]);
-    if (peminjaman.length === 0)
+    const peminjamana = await query(sql, [id]);
+
+    if (!peminjamana)
       return res.status(404).json({ message: "Peminjaman not found" });
-    res.json(peminjaman[0]);
+
+    const statusMap = {
+      0: "pending",
+      1: "approved",
+      2: "rejected",
+      3: "completed",
+    };
+
+    const peminjaman = peminjamana.map((row) => ({
+      id_peminjaman: row.id_peminjaman,
+      barang: {
+        id_barang: row.id_barang,
+        nama_barang: row.nama_barang,
+        // include other Barang columns here
+      },
+      user: {
+        id_user: row.id_user,
+        nama: row.nama_user,
+        // include other User columns here
+      },
+      qty: row.qty,
+      ket: row.ket,
+      tgl_pinjam: row.tgl_pinjam,
+      durasi_pinjam: row.durasi_pinjam,
+      tgl_kembali: row.tgl_kembali,
+      status: row.status,
+      status_formated: statusMap[row.status] || "unknown",
+    }));
+
+    res.json(peminjaman);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -466,7 +573,7 @@ export const approveReturnPeminjaman = async (req, res) => {
 
   const updatePeminjamanQuery = `
     UPDATE Peminjaman
-    SET status = 4, tgl_kembali = ?
+    SET status = 3, tgl_kembali = ?
     WHERE id_peminjaman = ?
   `;
 

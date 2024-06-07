@@ -5,7 +5,14 @@ export const getBarangs = async (req, res) => {
   const sql = "SELECT * FROM barang";
   try {
     const barangs = await query(sql);
-    res.json(barangs);
+
+    // Memproses data untuk mengubah nilai status
+    const processedBarangs = barangs.map((barang) => ({
+      ...barang,
+      status_formatted: barang.status === 0 ? "maintenance" : "ready",
+    }));
+
+    res.json(processedBarangs);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -18,7 +25,13 @@ export const getBarangById = async (req, res) => {
     const barang = await query(sql, [id]);
     if (barang.length === 0)
       return res.status(404).json({ message: "Barang not found" });
-    res.json(barang[0]);
+
+    const processedBarangs = barang.map((barang) => ({
+      ...barang,
+      status_formatted: barang.status === 0 ? "maintenance" : "ready",
+    }));
+
+    res.json(processedBarangs[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
