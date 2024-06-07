@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import registerRoutes from "./routes/registerRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import peminjamanRoutes from "./routes/peminjamanRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -30,6 +31,7 @@ app.use("/register", registerRoutes);
 app.use("/profile", profileRoutes);
 app.use("/users", userRoutes);
 app.use("/barang", barangRoutes);
+app.use("/dashboard", dashboardRoutes);
 app.use(authRoutes);
 app.use("/peminjaman", peminjamanRoutes);
 
