@@ -29,7 +29,7 @@ export const getPeminjaman = async (req, res) => {
   try {
     const rows = await query(sql);
 
-    const peminjamans = rows.map(row => ({
+    const peminjamans = rows.map((row) => ({
       id_peminjaman: row.id_peminjaman,
       barang: {
         id_barang: row.id_barang,
@@ -46,7 +46,7 @@ export const getPeminjaman = async (req, res) => {
       tgl_pinjam: row.tgl_pinjam,
       durasi_pinjam: row.durasi_pinjam,
       tgl_kembali: row.tgl_kembali,
-      status: row.status
+      status: row.status,
     }));
 
     res.json(peminjamans);
@@ -97,9 +97,7 @@ const createPeminjamanValidator = [
     .isISO8601()
     .toDate()
     .withMessage("Tanggal Pinjam must be a valid ISO 8601 date"),
-  body("durasi_pinjam")
-    .isInt({ min: 1 })
-    .withMessage("Durasi Pinjam must be an integer greater than 0"),
+  body("durasi_pinjam").isISO8601().toDate().withMessage("Required"),
 ];
 
 export const createPeminjaman = async (req, res) => {
@@ -117,12 +115,6 @@ export const createPeminjaman = async (req, res) => {
   const insertPeminjamanQuery = `
     INSERT INTO Peminjaman (id_barang, id_user, ket, qty, tgl_pinjam, durasi_pinjam)
     VALUES (?, ?, ?, ?, ?, ?)
-  `;
-
-  const updateBarangQuery = `
-    UPDATE Barang
-    SET jumlah = jumlah - ?
-    WHERE id_barang = ? AND jumlah >= ?
   `;
 
   const getUserEmailQuery = `
@@ -149,13 +141,6 @@ export const createPeminjaman = async (req, res) => {
       qty,
       tgl_pinjam,
       durasi_pinjam,
-    ]);
-
-    // Update Barang
-    const updateBarangResult = await query(updateBarangQuery, [
-      qty,
-      id_barang,
-      qty,
     ]);
 
     // Check if any row is affected
@@ -232,10 +217,6 @@ export const updatePeminjaman = async (req, res) => {
   const updatePeminjamanQuery =
     "UPDATE Peminjaman SET id_barang = ?, id_user = ?, qty = ?, ket = ?, tgl_pinjam = ?, durasi_pinjam = ? WHERE id_peminjaman = ? ";
 
-  const getBarangQtyQuery = "SELECT jumlah FROM Barang WHERE id_barang = ?";
-  const updateBarangQuery =
-    "UPDATE Barang SET jumlah = jumlah + ? - ? WHERE id_barang = ? AND jumlah >= ? ";
-
   const getUserEmailQuery = `
     SELECT email, nama
     FROM user
@@ -259,17 +240,6 @@ export const updatePeminjaman = async (req, res) => {
       throw new Error("Peminjaman not found");
     }
 
-    const oldQty = oldPeminjaman[0].qty;
-    const oldIdBarang = oldPeminjaman[0].id_barang;
-    const newIdBarang = id_barang;
-    const newQty = qty;
-
-    // Check if the new quantity is available in stock
-    const barang = await query(getBarangQtyQuery, [newIdBarang]);
-    if (!barang.length || barang[0].jumlah < newQty - oldQty) {
-      throw new Error("Not enough items in stock");
-    }
-
     // Update the peminjaman record
     await query(updatePeminjamanQuery, [
       id_barang,
@@ -280,22 +250,6 @@ export const updatePeminjaman = async (req, res) => {
       durasi_pinjam,
       id,
     ]);
-
-    // Update the stock of the old and new barang
-    if (oldIdBarang !== newIdBarang) {
-      await query("UPDATE Barang SET jumlah = jumlah + ? WHERE id_barang = ?", [
-        oldQty,
-        oldIdBarang,
-      ]);
-      await query(updateBarangQuery, [0, newQty, newIdBarang, newQty]);
-    } else {
-      await query(updateBarangQuery, [
-        oldQty,
-        newQty,
-        newIdBarang,
-        newQty - oldQty,
-      ]);
-    }
 
     // Commit transaction
     await query("COMMIT");
@@ -351,7 +305,26 @@ export const updatePeminjaman = async (req, res) => {
 
 export const approvePeminjaman = async (req, res) => {
   const { id } = req.params;
-  const sql = "UPDATE Peminjaman SET status = 1 WHERE id_peminjaman = ? ";
+  const updateStatusPeminjamanQuery = `
+  UPDATE peminjaman
+  SET status = '1'
+  WHERE id_peminjaman = ?
+`;
+
+  const updateBarangQuery = `
+  UPDATE Barang
+  SET jumlah = jumlah - ?
+  WHERE id_barang = ? AND jumlah >= ?
+`;
+
+  const getPeminjamanQuery = `
+SELECT p.*, b.nama_barang, u.nama
+FROM peminjaman p
+INNER JOIN Barang b ON p.id_barang = b.id_barang
+INNER JOIN User u ON p.id_user = u.id_user
+WHERE p.id_peminjaman = ?
+`;
+
   const getUserEmailQuery = `
     SELECT u.email
     FROM user u
@@ -361,24 +334,121 @@ export const approvePeminjaman = async (req, res) => {
 
   try {
     // Update status of peminjaman
-    const result = await query(sql, [id]);
+    const peminjamanResult = await query(getPeminjamanQuery, [id]);
+
+    if (!peminjamanResult) {
+      throw new Error("Peminjaman tidak ditemukan");
+    }
+    const peminjaman = peminjamanResult[0];
+
+    const { id_barang, qty, nama_barang, nama } = peminjaman;
+
+    const updateBarangResult = await query(updateBarangQuery, [
+      qty,
+      id_barang,
+      qty,
+    ]);
+
+    if (updateBarangResult.affectedRows === 0) {
+      throw new Error(
+        "Jumlah barang tidak mencukupi atau barang tidak ditemukan"
+      );
+    }
+
+    const updateStatusResult = await query(updateStatusPeminjamanQuery, [id]);
+
+    if (updateStatusResult.affectedRows === 0) {
+      throw new Error("Gagal mengupdate status peminjaman");
+    }
 
     const userQueryResult = await query(getUserEmailQuery, [id]);
     const userPeminjam = userQueryResult[0].email;
+
     await sendMail(
       userPeminjam,
       "Peminjaman Berhasil",
       "Peminjaman Anda berhasil",
-      "<p>Peminjaman Anda Telah di setujui</p>"
+      `<p>Halo, ${nama}</p>
+    <p>Terima kasih telah melakukan peminjaman barang. Berikut adalah detail peminjaman Anda:</p>
+    <ul>
+      <li><strong>Barang:</strong> ${nama_barang}</li>
+      <li><strong>Jumlah:</strong> ${qty}</li>
+    </ul>
+    <p>Peminjaman Kamu Telah Disetejui.</p>
+    <p>Tim Administrasi</p>`
     );
-
-    if (!result) {
-      throw new Error("Failed to update peminjaman status");
-    }
 
     res.json({ message: "Peminjaman Approved successfully" });
   } catch (err) {
     throw err;
+  }
+};
+
+export const rejectPeminjaman = async (req, res) => {
+  const { id } = req.params;
+
+  const updateStatusPeminjamanQuery = `
+    UPDATE peminjaman
+    SET status = '2' 
+    WHERE id_peminjaman = ?
+  `;
+
+  const getPeminjamanQuery = `
+  SELECT p.*, b.nama_barang, u.nama
+  FROM peminjaman p
+  INNER JOIN Barang b ON p.id_barang = b.id_barang
+  INNER JOIN User u ON p.id_user = u.id_user
+  WHERE p.id_peminjaman = ?
+  `;
+
+  const getUserEmailQuery = `
+    SELECT u.email
+    FROM user u
+    INNER JOIN Peminjaman p ON u.id_user = p.id_user
+    WHERE p.id_peminjaman = ?
+  `;
+
+  try {
+    // Mendapatkan data peminjaman
+    const peminjamanResult = await query(getPeminjamanQuery, [id]);
+    if (!peminjamanResult) {
+      throw new Error("Peminjaman tidak ditemukan");
+    }
+    const { qty, nama_barang, nama } = peminjamanResult[0];
+
+    // Mengupdate status peminjaman menjadi 'ditolak'
+    const updateStatusResult = await query(updateStatusPeminjamanQuery, [id]);
+
+    if (updateStatusResult.affectedRows === 0) {
+      throw new Error("Gagal mengupdate status peminjaman");
+    }
+
+    // Mengambil email pengguna yang melakukan peminjaman
+    const userQueryResult = await query(getUserEmailQuery, [id]);
+    if (!userQueryResult) {
+      throw new Error("Pengguna tidak ditemukan");
+    }
+
+    const userPeminjam = userQueryResult[0].email;
+
+    // Mengirim email pemberitahuan kepada pengguna
+    await sendMail(
+      userPeminjam,
+      "Peminjaman Ditolak",
+      "Peminjaman Anda ditolak",
+      `<p>Halo, ${nama}</p>
+    <p>Terima kasih telah melakukan peminjaman barang. Berikut adalah detail peminjaman Anda:</p>
+    <ul>
+      <li><strong>Barang:</strong> ${nama_barang}</li>
+      <li><strong>Jumlah:</strong> ${qty}</li>
+    </ul>
+    <p>Maaf Peminjaman Anda ditolak!</p>
+    <p>Tim Administrasi</p>`
+    );
+
+    res.json({ message: "Peminjaman Rejected successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -396,7 +466,7 @@ export const approveReturnPeminjaman = async (req, res) => {
 
   const updatePeminjamanQuery = `
     UPDATE Peminjaman
-    SET status = 0, tgl_kembali = ?
+    SET status = 4, tgl_kembali = ?
     WHERE id_peminjaman = ?
   `;
 
@@ -433,9 +503,9 @@ export const approveReturnPeminjaman = async (req, res) => {
     const userPeminjam = userQueryResult[0].email;
     await sendMail(
       userPeminjam,
-      "Peminjaman Berhasil",
-      "Peminjaman Anda berhasil",
-      "<p>Peminjaman yang anda kembalikan telah disetujui</p>"
+      "Peminjaman Selesai",
+      "Peminjaman Anda Sudah Selesai",
+      "<p>Peminjaman yang anda Telah Selesai!</p>"
     );
 
     res.json({ message: "Peminjaman returned successfully" });

@@ -6,6 +6,7 @@ import {
   getPeminjamanByUser,
   updatePeminjaman,
   approvePeminjaman,
+  rejectPeminjaman,
   approveReturnPeminjaman,
 } from "../controller/peminjaman.js";
 import authenticateToken from "../controller/middleware/authenticateToken.js";
@@ -18,6 +19,7 @@ router.get("/user", authenticateToken, getPeminjamanByUser); // Read Peminjaman 
 router.get("/:id", authenticateToken, getPeminjamanById); // Read Peminjaman by ID
 router.put("/:id", authenticateToken, updatePeminjaman); // Update Peminjaman
 router.put("/:id/approve", authenticateToken, approvePeminjaman); // Approve Peminjaman
+router.put("/:id/reject", authenticateToken, rejectPeminjaman); // Approve Peminjaman
 router.put("/:id/return", authenticateToken, approveReturnPeminjaman); // Return Peminjaman
 
 export default router;
