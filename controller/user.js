@@ -202,7 +202,7 @@ export const updateUser = [
 
 export const updatePassword = [
   // Validation and Sanitization
-  param("id").isInt().withMessage("User ID must be an integer"),
+  param("id_user").isInt().withMessage("User ID must be an integer"),
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
