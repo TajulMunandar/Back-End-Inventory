@@ -202,7 +202,7 @@ export const updateUser = [
 
 export const updatePassword = [
   // Validation and Sanitization
-  param("id_user").isInt().withMessage("User ID must be an integer"),
+  param("id").isInt().withMessage("User ID must be an integer"),
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
@@ -216,7 +216,15 @@ export const updatePassword = [
 
     const { id } = req.params;
     const { password } = req.body;
+
     try {
+      const checkId = "SELECT * FROM user WHERE id_user = ?";
+      const user = await query(checkId, id);
+
+      if (user.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10);
       const sql = "UPDATE User SET password = ? WHERE id_user = ?";
       await query(sql, [hashedPassword, id]);
