@@ -250,12 +250,6 @@ export const createPeminjaman = async (req, res) => {
       durasi_pinjam,
     ]);
 
-    // Check if any row is affected
-    if (updateBarangResult.affectedRows === 0) {
-      await query("ROLLBACK");
-      return res.status(400).json({ error: "Not enough items in stock" });
-    }
-
     // Commit transaction
     await query("COMMIT");
 
