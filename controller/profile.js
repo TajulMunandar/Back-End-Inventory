@@ -11,7 +11,9 @@ export const getUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "Profil pengguna tidak ditemukan" });
     }
-    res.json(user);
+
+    // Mengirim data profil pengguna bersama dengan userId
+    res.json({ userId, ...user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
