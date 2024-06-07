@@ -3,9 +3,52 @@ import { body, validationResult } from "express-validator";
 import { sendMail } from "./mailer.js";
 
 export const getPeminjaman = async (req, res) => {
-  const sql = "SELECT * FROM Peminjaman";
+  const sql = `
+    SELECT 
+      p.id_peminjaman, 
+      p.id_barang, 
+      b.nama_barang, 
+      -- add other Barang columns here
+      p.id_user, 
+      u.nama AS nama_user, 
+      -- add other User columns here
+      p.qty, 
+      p.ket, 
+      p.tgl_pinjam, 
+      p.durasi_pinjam, 
+      p.tgl_kembali, 
+      p.status
+    FROM 
+      Peminjaman p
+    JOIN 
+      Barang b ON p.id_barang = b.id_barang
+    JOIN 
+      User u ON p.id_user = u.id_user
+  `;
+
   try {
-    const peminjamans = await query(sql);
+    const rows = await query(sql);
+
+    const peminjamans = rows.map(row => ({
+      id_peminjaman: row.id_peminjaman,
+      barang: {
+        id_barang: row.id_barang,
+        nama_barang: row.nama_barang,
+        // include other Barang columns here
+      },
+      user: {
+        id_user: row.id_user,
+        nama: row.nama_user,
+        // include other User columns here
+      },
+      qty: row.qty,
+      ket: row.ket,
+      tgl_pinjam: row.tgl_pinjam,
+      durasi_pinjam: row.durasi_pinjam,
+      tgl_kembali: row.tgl_kembali,
+      status: row.status
+    }));
+
     res.json(peminjamans);
   } catch (err) {
     res.status(500).json({ error: err.message });
