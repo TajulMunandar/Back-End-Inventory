@@ -5,7 +5,7 @@ export const getUserProfile = async (req, res) => {
   const userId = req.userId;
 
   const sql =
-    "SELECT nama, email, telepon, nik, divisi, is_admin, perusahaan FROM User WHERE id_user = ?";
+    "SELECT nama, email, telepon, nik, divisi, perusahaan FROM User WHERE id_user = ?";
   try {
     const [user] = await query(sql, [userId]);
     if (!user) {

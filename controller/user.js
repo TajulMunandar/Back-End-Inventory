@@ -102,7 +102,8 @@ export const getUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   const { id } = req.params;
-  const sql = "SELECT * FROM User WHERE id_user = ?";
+  const sql =
+    "SELECT id_user, nama, email, telepon, nik, divisi, is_admin, perusahaan FROM User WHERE id_user = ?";
   try {
     const user = await query(sql, [id]);
     if (user.length === 0)
