@@ -32,7 +32,8 @@ export const getTotal = async (req, res) => {
     FROM 
       Peminjaman
     WHERE 
-      DATEDIFF(NOW(), durasi_pinjam) AND tgl_kembali IS NULL
+      durasi_pinjam < NOW() 
+      AND tgl_kembali IS NULL;
   `;
 
   try {

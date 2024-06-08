@@ -1,5 +1,18 @@
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               8.0.30 - MySQL Community Server - GPL
+-- Server OS:                    Win64
+-- HeidiSQL Version:             12.1.0.6537
+-- --------------------------------------------------------
 
-use inventory_system;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 -- Dumping structure for table inventory_system.barang
 CREATE TABLE IF NOT EXISTS `barang` (
@@ -17,25 +30,6 @@ CREATE TABLE IF NOT EXISTS `barang` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table inventory_system.barang: ~0 rows (approximately)
-
--- Dumping structure for table inventory_system.users
-CREATE TABLE IF NOT EXISTS `user` (
-  `id_user` int NOT NULL AUTO_INCREMENT,
-  `nama` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `telepon` varchar(20) DEFAULT NULL,
-  `nik` varchar(20) DEFAULT NULL,
-  `divisi` varchar(50) DEFAULT NULL,
-  `is_admin` tinyint(1) DEFAULT '0',
-  `perusahaan` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_user`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- Dumping data for table inventory_system.users: ~0 rows (approximately)
-
 
 -- Dumping structure for table inventory_system.peminjaman
 CREATE TABLE IF NOT EXISTS `peminjaman` (
@@ -57,6 +51,24 @@ CREATE TABLE IF NOT EXISTS `peminjaman` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table inventory_system.peminjaman: ~0 rows (approximately)
+
+-- Dumping structure for table inventory_system.user
+CREATE TABLE IF NOT EXISTS `user` (
+  `id_user` int NOT NULL AUTO_INCREMENT,
+  `nama` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `telepon` varchar(20) DEFAULT NULL,
+  `nik` varchar(20) DEFAULT NULL,
+  `divisi` varchar(50) DEFAULT NULL,
+  `is_admin` tinyint(1) DEFAULT '0',
+  `perusahaan` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_user`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Dumping data for table inventory_system.user: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
