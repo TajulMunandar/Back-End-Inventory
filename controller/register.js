@@ -15,7 +15,8 @@ export const registerUser = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Simpan pengguna ke dalam database
-  const sql = "INSERT INTO User (nama, email, password) VALUES (?, ?, ?)";
+  const sql =
+    "INSERT INTO User (nama, email, password, created_at) VALUES (?, ?, ?, NOW())";
   try {
     await query(sql, [nama, email, hashedPassword]);
     res.status(201).json({ message: "Registrasi berhasil" });

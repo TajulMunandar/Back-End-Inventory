@@ -102,7 +102,7 @@ export const createBarang = [
       tgl_pembelian,
     } = req.body;
     const sql =
-      "INSERT INTO Barang (nama_barang, nomor_seri, jumlah, supplier, kepemilikan, status, tgl_pembelian) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      "INSERT INTO Barang (nama_barang, nomor_seri, jumlah, supplier, kepemilikan, status, tgl_pembelian, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
     try {
       await query(sql, [
         nama_barang,

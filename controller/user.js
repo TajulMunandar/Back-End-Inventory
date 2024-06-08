@@ -70,7 +70,7 @@ export const createUser = [
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
       const sql =
-        "INSERT INTO User (nama, email, password, telepon, nik, divisi, is_admin, perusahaan) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO User (nama, email, password, telepon, nik, divisi, is_admin, perusahaan, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
       await query(sql, [
         nama,
