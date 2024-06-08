@@ -555,10 +555,7 @@ export const rejectPeminjaman = async (req, res) => {
 
 export const approveReturnPeminjaman = async (req, res) => {
   const { id } = req.params;
-  const { tgl_kembali } = new Date()
-    .toISOString()
-    .slice(0, 19)
-    .replace("T", " ");
+  const tgl_kembali = new Date();
 
   const sql = "SELECT * FROM peminjaman WHERE id_peminjaman = ?";
   const getUserEmailQuery = `
