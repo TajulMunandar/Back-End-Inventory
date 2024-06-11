@@ -130,6 +130,7 @@ export const getPeminjamanByUser = async (req, res) => {
   p.id_peminjaman, 
   p.id_barang, 
   b.nama_barang, 
+  b.kepemilikan,
   -- add other Barang columns here
   p.id_user, 
   u.nama AS nama_user, 
@@ -166,6 +167,7 @@ JOIN
       barang: {
         id_barang: row.id_barang,
         nama_barang: row.nama_barang,
+        kepemilikan: row.kepemilikan,
         // include other Barang columns here
       },
       user: {
