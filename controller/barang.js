@@ -208,9 +208,28 @@ export const updateBarang = [
 
 export const deleteBarang = async (req, res) => {
   const { id } = req.params;
-  const sql = "DELETE FROM barang WHERE id_barang = ?";
+
+  // SQL query to check for references in another table
+  const checkReferenceSql = `
+    SELECT COUNT(*) AS count FROM peminjaman WHERE id_barang = ?
+  `;
+
+  const deleteSql = "DELETE FROM barang WHERE id_barang = ?";
+
   try {
-    await query(sql, [id]);
+    // Check if the barang is referenced in another table
+    const [referenceResult] = await query(checkReferenceSql, [id]);
+    const referenceCount = referenceResult.count;
+
+    if (referenceCount > 0) {
+      return res.status(400).json({ 
+        isUsed: true,
+        error: "Cannot delete barang, it is referenced by another record" 
+      });
+    }
+
+    // If no references are found, proceed with the delete
+    await query(deleteSql, [id]);
     res.json({ message: "Barang deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
